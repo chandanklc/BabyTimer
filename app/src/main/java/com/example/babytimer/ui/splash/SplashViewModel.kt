@@ -16,7 +16,7 @@ class SplashViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = "Baby"
+            initialValue = "MAHASVIN"
         )
 
     val photoUri: StateFlow<String?> = repository.photoUri

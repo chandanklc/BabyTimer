@@ -1,5 +1,6 @@
 package com.example.babytimer.ui.splash
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -35,11 +37,20 @@ fun SplashScreen(
     onEnterHome: () -> Unit = {}
 ) {
     val photoUri by viewModel.photoUri.collectAsState()
+    val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        viewModel.updatePhotoUri(uri?.toString())
+        uri?.let {
+            try {
+                val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(it, flag)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            viewModel.updatePhotoUri(it.toString())
+        }
     }
 
     Box(

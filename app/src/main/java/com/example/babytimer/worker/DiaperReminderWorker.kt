@@ -5,7 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -25,6 +27,11 @@ class DiaperReminderWorker(appContext: Context, workerParams: WorkerParameters) 
         val channelId = "diaper_reminder_channel"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
+
             val channel = NotificationChannel(
                 channelId,
                 "Diaper Change Reminders",
@@ -32,6 +39,7 @@ class DiaperReminderWorker(appContext: Context, workerParams: WorkerParameters) 
             ).apply {
                 description = "High priority reminders for baby diaper changes"
                 enableVibration(true)
+                setSound(Settings.System.DEFAULT_NOTIFICATION_URI, audioAttributes)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -50,6 +58,7 @@ class DiaperReminderWorker(appContext: Context, workerParams: WorkerParameters) 
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_today, "Acknowledge", pendingIntent)

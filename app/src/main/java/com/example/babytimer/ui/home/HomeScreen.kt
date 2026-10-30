@@ -1,5 +1,10 @@
 package com.example.babytimer.ui.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,9 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.example.babytimer.ui.splash.SplashViewModel
 import com.example.babytimer.ui.splash.dashedBorder
@@ -36,6 +43,34 @@ fun HomeScreen(
     val babyName by viewModel.babyName.collectAsState()
     val photoUri by viewModel.photoUri.collectAsState()
     val diaperState by diaperViewModel.state.collectAsState()
+
+    val context = LocalContext.current
+    var hasNotificationPermission by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasNotificationPermission = isGranted
+    }
+
+    val handleStart: (Boolean) -> Unit = { isNormal ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            if (isNormal) diaperViewModel.startNormalTimer() else diaperViewModel.startReusableTimer()
+        }
+    }
 
     val cardBg = Color.White
 
@@ -274,7 +309,7 @@ fun HomeScreen(
                 }
             }
 
-            // Card 2: Diaper Change High-Priority Timers (2 Columns: Reusable vs Normal)
+            // Card 2: Diaper Change High-Priority Timers (2 Columns: Reusable vs Normal with Duration Dropdown)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -298,7 +333,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "High priority: Normal (3 hrs) & Reusable (1 hr)",
+                                text = "High priority: Set custom duration from seconds to hours",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MutedText
                             )
@@ -312,26 +347,28 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Column 1: Normal Diaper (3 hrs timer)
+                        // Column 1: Normal Diaper
                         DiaperTimerColumn(
                             title = "Normal Diaper",
-                            subtitle = "3 hrs timer",
                             secondsRemaining = diaperState.normalSecondsRemaining,
+                            selectedDurationSeconds = diaperState.normalSelectedDurationSeconds,
                             isActive = diaperState.normalIsActive,
                             containerColor = PinkPillBg,
-                            onStart = { diaperViewModel.startNormalTimer() },
+                            onDurationSelected = { secs -> diaperViewModel.setNormalDuration(secs) },
+                            onStart = { handleStart(true) },
                             onReset = { diaperViewModel.resetNormalTimer() },
                             modifier = Modifier.weight(1f)
                         )
 
-                        // Column 2: Reusable Diaper (1 hr timer)
+                        // Column 2: Reusable Diaper
                         DiaperTimerColumn(
                             title = "Reusable Diaper",
-                            subtitle = "1 hr timer",
                             secondsRemaining = diaperState.reusableSecondsRemaining,
+                            selectedDurationSeconds = diaperState.reusableSelectedDurationSeconds,
                             isActive = diaperState.reusableIsActive,
                             containerColor = MintCardBg,
-                            onStart = { diaperViewModel.startReusableTimer() },
+                            onDurationSelected = { secs -> diaperViewModel.setReusableDuration(secs) },
+                            onStart = { handleStart(false) },
                             onReset = { diaperViewModel.resetReusableTimer() },
                             modifier = Modifier.weight(1f)
                         )
@@ -411,21 +448,37 @@ fun HomeScreen(
 @Composable
 fun DiaperTimerColumn(
     title: String,
-    subtitle: String,
     secondsRemaining: Long,
+    selectedDurationSeconds: Long,
     isActive: Boolean,
     containerColor: Color,
+    onDurationSelected: (Long) -> Unit,
     onStart: () -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val presetDurations = listOf(
+        Pair("20 sec (Test)", 20L),
+        Pair("30 min", 30 * 60L),
+        Pair("1 hour", 3600L),
+        Pair("2 hours", 2 * 3600L),
+        Pair("3 hours", 3 * 3600L),
+        Pair("4 hours", 4 * 3600L)
+    )
+
+    val selectedLabel = presetDurations.find { it.second == selectedDurationSeconds }?.first ?: "${selectedDurationSeconds}s"
+
     val hrs = secondsRemaining / 3600
     val mins = (secondsRemaining % 3600) / 60
     val secs = secondsRemaining % 60
     val timeFormatted = if (hrs > 0) {
         String.format("%d:%02d:%02d", hrs, mins, secs)
-    } else {
+    } else if (mins > 0) {
         String.format("%02d:%02d", mins, secs)
+    } else {
+        String.format("00:%02d", secs)
     }
 
     Column(
@@ -441,11 +494,36 @@ fun DiaperTimerColumn(
             fontWeight = FontWeight.Bold,
             color = DeepPurple
         )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.labelSmall,
-            color = MutedText
-        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Dropdown menu for selecting duration
+        Box(modifier = Modifier.wrapContentSize(Alignment.TopCenter)) {
+            OutlinedButton(
+                onClick = { if (!isActive) expanded = true },
+                enabled = !isActive,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                modifier = Modifier.height(30.dp),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.7f))
+            ) {
+                Text(text = selectedLabel, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = DeepPurple)
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                presetDurations.forEach { (label, secs) ->
+                    DropdownMenuItem(
+                        text = { Text(label, fontSize = 12.sp) },
+                        onClick = {
+                            onDurationSelected(secs)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -456,7 +534,7 @@ fun DiaperTimerColumn(
             color = AccentPurple
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),

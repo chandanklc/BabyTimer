@@ -23,9 +23,13 @@ class SplashViewModelTest {
     private class FakeBabyPreferencesRepository : BabyPreferencesRepository {
         private val _babyName = MutableStateFlow("Baby")
         private val _photoUri = MutableStateFlow<String?>(null)
+        private val _normalTimerEndTime = MutableStateFlow(0L)
+        private val _reusableTimerEndTime = MutableStateFlow(0L)
 
         override val babyName = _babyName.asStateFlow()
         override val photoUri = _photoUri.asStateFlow()
+        override val normalTimerEndTime = _normalTimerEndTime.asStateFlow()
+        override val reusableTimerEndTime = _reusableTimerEndTime.asStateFlow()
 
         override suspend fun updateBabyName(name: String) {
             _babyName.value = name
@@ -33,6 +37,14 @@ class SplashViewModelTest {
 
         override suspend fun updatePhotoUri(uri: String?) {
             _photoUri.value = uri
+        }
+
+        override suspend fun updateNormalTimerEndTime(time: Long) {
+            _normalTimerEndTime.value = time
+        }
+
+        override suspend fun updateReusableTimerEndTime(time: Long) {
+            _reusableTimerEndTime.value = time
         }
     }
 
