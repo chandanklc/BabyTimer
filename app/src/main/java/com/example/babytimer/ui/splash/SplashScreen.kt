@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.babytimer.ui.theme.*
 
 @Composable
 fun SplashScreen(
@@ -41,20 +42,10 @@ fun SplashScreen(
         viewModel.updatePhotoUri(uri?.toString())
     }
 
-    // Custom colors matching the reference design
-    val creamBg = Color(0xFFFFFDF6)
-    val lavenderBubble = Color(0xFFEFE8FA)
-    val peachBubble = Color(0xFFFFEAD6)
-    val mintCardBg = Color(0xFFD3F5E4)
-    val mintCardBorder = Color(0xFF8CE2BA)
-    val deepPurple = Color(0xFF2C2543)
-    val accentPurple = Color(0xFF6B53C5)
-    val mutedText = Color(0xFF7A7585)
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(creamBg)
+            .background(CreamBg)
     ) {
         // Top-left decorative bubble
         Box(
@@ -62,7 +53,7 @@ fun SplashScreen(
                 .size(200.dp)
                 .offset(x = (-60).dp, y = (-60).dp)
                 .clip(CircleShape)
-                .background(lavenderBubble)
+                .background(LavenderBubble)
         )
 
         // Top-right decorative bubble
@@ -72,7 +63,7 @@ fun SplashScreen(
                 .align(Alignment.TopEnd)
                 .offset(x = 60.dp, y = 40.dp)
                 .clip(CircleShape)
-                .background(peachBubble)
+                .background(PeachBubble)
         )
 
         Column(
@@ -92,7 +83,7 @@ fun SplashScreen(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(accentPurple),
+                        .background(AccentPurple),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = "👶", fontSize = 24.sp)
@@ -104,7 +95,7 @@ fun SplashScreen(
                     text = "Little Moments",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = deepPurple,
+                    color = DeepPurple,
                     fontSize = 32.sp
                 )
 
@@ -113,7 +104,7 @@ fun SplashScreen(
                 Text(
                     text = "A tiny journal for your growing family",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = mutedText,
+                    color = MutedText,
                     textAlign = TextAlign.Center
                 )
             }
@@ -125,9 +116,9 @@ fun SplashScreen(
                     .height(280.dp)
                     .padding(horizontal = 8.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(mintCardBg)
+                    .background(MintCardBg)
                     .dashedBorder(
-                        color = mintCardBorder,
+                        color = MintCardBorder,
                         strokeWidth = 2.dp,
                         strokeLength = 8.dp,
                         gapLength = 6.dp,
@@ -159,7 +150,7 @@ fun SplashScreen(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Add Photo",
-                                tint = accentPurple,
+                                tint = AccentPurple,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
@@ -170,7 +161,7 @@ fun SplashScreen(
                             text = "Tap to add your baby's first photo",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = accentPurple,
+                            color = AccentPurple,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -185,7 +176,7 @@ fun SplashScreen(
                 Text(
                     text = "Your photos stay beautifully organized here.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = mutedText,
+                    color = MutedText,
                     textAlign = TextAlign.Center
                 )
 
@@ -197,7 +188,7 @@ fun SplashScreen(
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentPurple)
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentPurple)
                 ) {
                     Text(
                         text = "Create our story",
@@ -212,7 +203,7 @@ fun SplashScreen(
                 Text(
                     text = "Private • Made with love",
                     style = MaterialTheme.typography.bodySmall,
-                    color = mutedText,
+                    color = MutedText,
                     textAlign = TextAlign.Center
                 )
             }
