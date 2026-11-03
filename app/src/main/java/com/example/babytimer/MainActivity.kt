@@ -14,6 +14,7 @@ import com.example.babytimer.data.BabyPreferencesRepositoryImpl
 import com.example.babytimer.data.dataStore
 import com.example.babytimer.ui.home.HomeScreen
 import com.example.babytimer.ui.meal.MealPlannerScreen
+import com.example.babytimer.ui.meal.RecipeEditorScreen
 import com.example.babytimer.ui.splash.SplashScreen
 import com.example.babytimer.ui.splash.SplashViewModel
 import com.example.babytimer.ui.theme.BabyTimerTheme
@@ -29,6 +30,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             BabyTimerTheme {
                 var currentScreen by remember { mutableStateOf("splash") }
+                var activeDay by remember { mutableStateOf("") }
+                var activeSlot by remember { mutableStateOf("") }
+                var activeMealName by remember { mutableStateOf("") }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
@@ -43,7 +47,19 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToMealPlanner = { currentScreen = "meal_planner" }
                             )
                             "meal_planner" -> MealPlannerScreen(
-                                onBack = { currentScreen = "home" }
+                                onBack = { currentScreen = "home" },
+                                onSelectMealSlot = { day, slot, meal ->
+                                    activeDay = day
+                                    activeSlot = slot
+                                    activeMealName = meal
+                                    currentScreen = "recipe_editor"
+                                }
+                            )
+                            "recipe_editor" -> RecipeEditorScreen(
+                                dayName = activeDay,
+                                slotType = activeSlot,
+                                initialMealName = activeMealName,
+                                onBack = { currentScreen = "meal_planner" }
                             )
                         }
                     }

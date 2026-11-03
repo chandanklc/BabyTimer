@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,31 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.babytimer.ui.theme.*
 
-data class DayMealPlan(
-    val dayName: String,
-    val amMeal: String,
-    val lunch: String,
-    val dinner: String,
-    val snack: String,
-    val cardColor: Color
-)
-
 @Composable
 fun MealPlannerScreen(
-    onBack: () -> Unit = {}
+    viewModel: MealPlannerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onBack: () -> Unit = {},
+    onSelectMealSlot: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
-    val weeklyPlan = listOf(
-        DayMealPlan("Monday", "Oats", "Veggie", "Rice", "Fruit", Color(0xFFD3F5E4)),
-        DayMealPlan("Tuesday", "Idli", "Lentil", "Pasta", "Yogurt", Color(0xFFE8E0FF)),
-        DayMealPlan("Wednesday", "Toast", "Khichdi", "Soup", "Banana", Color(0xFFFFE0CC)),
-        DayMealPlan("Thursday", "Pancake", "Rice", "Dal", "Berries", Color(0xFFFFD6E0)),
-        DayMealPlan("Friday", "Porridge", "Potato", "Fish", "Apple", Color(0xFFD3F5E4)),
-        DayMealPlan("Saturday", "Puff", "Noodles", "Stew", "Cookie", Color(0xFFE8E0FF)),
-        DayMealPlan("Sunday", "Waffle", "Paneer", "Khichdi", "Mango", Color(0xFFFFE0CC))
-    )
-
-    var selectedMeal by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var editDialogVisible by remember { mutableStateOf(false) }
+    val weeklyPlan by viewModel.weeklyPlan.collectAsState()
 
     Scaffold(
         containerColor = CreamBg
@@ -69,7 +51,7 @@ fun MealPlannerScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = DeepPurple
                     )
@@ -164,50 +146,28 @@ fun MealPlannerScreen(
 
                             // Meal 1: AM Meal
                             MealSlotBox(mealName = plan.amMeal, bg = plan.cardColor) {
-                                selectedMeal = Pair(plan.dayName, "AM Meal: ${plan.amMeal}")
-                                editDialogVisible = true
+                                onSelectMealSlot(plan.dayName, "am", plan.amMeal)
                             }
 
                             // Meal 2: Lunch
                             MealSlotBox(mealName = plan.lunch, bg = plan.cardColor) {
-                                selectedMeal = Pair(plan.dayName, "Lunch: ${plan.lunch}")
-                                editDialogVisible = true
+                                onSelectMealSlot(plan.dayName, "lunch", plan.lunch)
                             }
 
                             // Meal 3: Dinner
                             MealSlotBox(mealName = plan.dinner, bg = plan.cardColor) {
-                                selectedMeal = Pair(plan.dayName, "Dinner: ${plan.dinner}")
-                                editDialogVisible = true
+                                onSelectMealSlot(plan.dayName, "dinner", plan.dinner)
                             }
 
                             // Meal 4: Snack
                             MealSlotBox(mealName = plan.snack, bg = plan.cardColor) {
-                                selectedMeal = Pair(plan.dayName, "Snack: ${plan.snack}")
-                                editDialogVisible = true
+                                onSelectMealSlot(plan.dayName, "snack", plan.snack)
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    if (editDialogVisible && selectedMeal != null) {
-        AlertDialog(
-            onDismissRequest = { editDialogVisible = false },
-            title = { Text("Edit Meal Plan") },
-            text = { Text("Planning for ${selectedMeal?.first}\n${selectedMeal?.second}\n\nTap to customize ingredients or timing.") },
-            confirmButton = {
-                Button(onClick = { editDialogVisible = false }) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { editDialogVisible = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
@@ -232,10 +192,11 @@ fun MealSlotBox(
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = DeepPurple,
-            fontSize = 11.sp
+            fontSize = 11.sp,
+            maxLines = 1
         )
         Text(
-            text = "Tap",
+            text = "Tap to edit",
             style = MaterialTheme.typography.labelSmall,
             color = AccentPurple,
             fontSize = 9.sp
