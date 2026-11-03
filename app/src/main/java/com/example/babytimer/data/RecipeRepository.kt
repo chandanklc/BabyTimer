@@ -27,31 +27,31 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
     private val defaultRecipes = listOf(
         Recipe(
             title = "Oats & Banana Mash",
-            content = "6+ months\nIngredients: Rolled oats, breast milk/formula/water, ripe banana.\nInstructions: Cook oats until soft. Mash ripe banana and stir into warm oats for natural sweetness."
+            content = "Age: 6+ months\n\nIngredients:\n• 3 tbsp rolled oats\n• 1/2 ripe banana\n• 1/2 cup breast milk, formula, or water\n\nInstructions:\n1. Cook oats in water or milk over medium heat for 5 minutes until soft and creamy.\n2. Mash the ripe banana in a bowl using a fork until smooth.\n3. Stir the warm oats into the mashed banana until well blended.\n4. Let cool to room temperature before serving."
         ),
         Recipe(
             title = "Steamed Apple & Pear Puree",
-            content = "6+ months\nIngredients: 1 apple, 1 pear.\nInstructions: Peel, core, and chop fruit. Steam until tender (8-10 mins). Blend until smooth."
+            content = "Age: 6+ months\n\nIngredients:\n• 1 organic sweet apple\n• 1 ripe pear\n• Pinch of Ceylon cinnamon (optional)\n\nInstructions:\n1. Wash, peel, core, and chop the apple and pear into small chunks.\n2. Place in a steamer basket over boiling water, cover, and steam for 8–10 minutes until fork-tender.\n3. Transfer fruits to a blender or food processor.\n4. Blend until completely smooth and velvety. Cool before feeding."
         ),
         Recipe(
             title = "Moong Dal Khichdi",
-            content = "8+ months\nIngredients: 2 tbsp yellow moong dal, 2 tbsp rice, pinch of turmeric, water.\nInstructions: Wash dal and rice. Pressure cook with extra water and turmeric for 4-5 whistles until very soft. Mash well."
+            content = "Age: 8+ months\n\nIngredients:\n• 2 tbsp yellow moong dal (split yellow lentils)\n• 2 tbsp polished white or brown rice\n• 1/4 tsp turmeric powder\n• 1/2 tsp ghee (clarified butter)\n• 1.5 cups water\n\nInstructions:\n1. Wash rice and moong dal thoroughly together in water.\n2. In a pressure cooker, add rice, dal, turmeric, ghee, and 1.5 cups of water.\n3. Cook for 4-5 whistles on medium-low heat until thoroughly mushy.\n4. Mash with the back of a spoon to a porridge consistency and serve warm."
         ),
         Recipe(
             title = "Mashed Sweet Potato & Carrot",
-            content = "7+ months\nIngredients: 1 small sweet potato, 1 carrot.\nInstructions: Peel and chop. Steam or boil until fork-tender. Mash with a spoon or fork until smooth."
+            content = "Age: 7+ months\n\nIngredients:\n• 1 medium sweet potato\n• 1 fresh carrot\n• 1 tsp unsalted butter or breast milk\n\nInstructions:\n1. Wash, peel, and dice the sweet potato and carrot.\n2. Steam or boil in water for 12-15 minutes until extremely tender.\n3. Transfer to a mixing bowl, add butter or a splash of breast milk/formula.\n4. Mash thoroughly with a potato masher or fork until lump-free."
         ),
         Recipe(
             title = "Soft Idli & Veggie Mash",
-            content = "9+ months\nIngredients: 2 soft idlis, warm vegetable broth or milk.\nInstructions: Crumble idlis into a bowl, pour warm broth over them, and mash into a soft, digestible porridge."
+            content = "Age: 9+ months\n\nIngredients:\n• 2 soft plain idlis\n• 1/2 cup warm vegetable or bone broth (salt-free)\n\nInstructions:\n1. Take 2 freshly steamed soft idlis in a clean bowl.\n2. Pour warm salt-free vegetable broth or warm milk over them.\n3. Let it soak for 2 minutes to absorb the liquid.\n4. Mash with a fork into a soft, spoonable porridge that is easy for baby to swallow."
         ),
         Recipe(
             title = "Avocado & Yogurt Cream",
-            content = "6+ months\nIngredients: 1/2 ripe avocado, 2 tbsp plain whole milk yogurt.\nInstructions: Scoop avocado and mash thoroughly with yogurt until creamy and smooth."
+            content = "Age: 6+ months\n\nIngredients:\n• 1/2 ripe Hass avocado\n• 3 tbsp plain whole-milk Greek yogurt\n\nInstructions:\n1. Cut the ripe avocado in half, remove the pit, and scoop the flesh into a bowl.\n2. Add the plain whole-milk Greek yogurt.\n3. Mash and whisk together using a fork until completely smooth and creamy.\n4. Packed with healthy fats for baby's brain development!"
         ),
         Recipe(
             title = "Rice & Dal Soup",
-            content = "8+ months\nIngredients: 2 tbsp well-cooked rice, thin yellow dal soup.\nInstructions: Mix soft cooked rice into warm, watery lentil soup until it reaches a comforting, easy-to-sip consistency."
+            content = "Age: 8+ months\n\nIngredients:\n• 2 tbsp well-cooked soft white rice\n• 1/2 cup watery yellow moong dal soup (dal water)\n• 1 drop of ghee\n\nInstructions:\n1. Prepare thin yellow moong dal soup by boiling dal with turmeric and cumin in plenty of water until watery.\n2. Take 2 tablespoons of soft-cooked mashed rice in a bowl.\n3. Pour the warm dal soup over the rice and mix well.\n4. Serve as an easy-to-sip, highly nourishing liquid meal."
         )
     )
 
