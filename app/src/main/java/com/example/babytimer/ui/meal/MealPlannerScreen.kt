@@ -27,6 +27,14 @@ fun MealPlannerScreen(
     onSelectMealSlot: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     val weeklyPlan by viewModel.weeklyPlan.collectAsState()
+    val savedRecipes by viewModel.savedRecipes.collectAsState()
+
+    var activeDay by remember { mutableStateOf("") }
+    var activeSlot by remember { mutableStateOf("") }
+    var activeMealName by remember { mutableStateOf("") }
+
+    var showActionDialog by remember { mutableStateOf(false) }
+    var showLibraryPicker by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = CreamBg
@@ -146,28 +154,113 @@ fun MealPlannerScreen(
 
                             // Meal 1: AM Meal
                             MealSlotBox(mealName = plan.amMeal, bg = plan.cardColor) {
-                                onSelectMealSlot(plan.dayName, "am", plan.amMeal)
+                                activeDay = plan.dayName
+                                activeSlot = "am"
+                                activeMealName = plan.amMeal
+                                showActionDialog = true
                             }
 
                             // Meal 2: Lunch
                             MealSlotBox(mealName = plan.lunch, bg = plan.cardColor) {
-                                onSelectMealSlot(plan.dayName, "lunch", plan.lunch)
+                                activeDay = plan.dayName
+                                activeSlot = "lunch"
+                                activeMealName = plan.lunch
+                                showActionDialog = true
                             }
 
                             // Meal 3: Dinner
                             MealSlotBox(mealName = plan.dinner, bg = plan.cardColor) {
-                                onSelectMealSlot(plan.dayName, "dinner", plan.dinner)
+                                activeDay = plan.dayName
+                                activeSlot = "dinner"
+                                activeMealName = plan.dinner
+                                showActionDialog = true
                             }
 
                             // Meal 4: Snack
                             MealSlotBox(mealName = plan.snack, bg = plan.cardColor) {
-                                onSelectMealSlot(plan.dayName, "snack", plan.snack)
+                                activeDay = plan.dayName
+                                activeSlot = "snack"
+                                activeMealName = plan.snack
+                                showActionDialog = true
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    // Action Dialog: Ask user if they want to use Saved Recipe or Create New Recipe
+    if (showActionDialog) {
+        AlertDialog(
+            onDismissRequest = { showActionDialog = false },
+            title = { Text("Plan Meal for $activeDay") },
+            text = { Text("How would you like to update this meal slot?") },
+            confirmButton = {
+                Button(onClick = {
+                    showActionDialog = false
+                    if (savedRecipes.isNotEmpty()) {
+                        showLibraryPicker = true
+                    } else {
+                        onSelectMealSlot(activeDay, activeSlot, activeMealName)
+                    }
+                }) {
+                    Text("📂 Use Saved Recipe")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = {
+                    showActionDialog = false
+                    onSelectMealSlot(activeDay, activeSlot, activeMealName)
+                }) {
+                    Text("✍️ Create New Recipe")
+                }
+            }
+        )
+    }
+
+    // Saved Recipe Library Picker Dialog
+    if (showLibraryPicker) {
+        AlertDialog(
+            onDismissRequest = { showLibraryPicker = false },
+            title = { Text("Select from Saved Library") },
+            text = {
+                if (savedRecipes.isEmpty()) {
+                    Text("No saved recipes found. Create one first!")
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(savedRecipes) { recipe ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.updateMeal(activeDay, activeSlot, recipe.title)
+                                        showLibraryPicker = false
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = MintCardBg)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(text = recipe.title, fontWeight = FontWeight.Bold, color = DeepPurple)
+                                    if (recipe.content.isNotBlank()) {
+                                        Text(text = recipe.content, style = MaterialTheme.typography.bodySmall, color = MutedText, maxLines = 2)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLibraryPicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
