@@ -36,4 +36,10 @@ class MealPlannerViewModel(application: Application) : AndroidViewModel(applicat
             mealRepository.updateMeal(dayName, slotType, newMeal)
         }
     }
+
+    fun saveRecipe(title: String, content: String) {
+        viewModelScope.launch {
+            recipeRepository.saveRecipe(title, content)
+        }
+    }
 }

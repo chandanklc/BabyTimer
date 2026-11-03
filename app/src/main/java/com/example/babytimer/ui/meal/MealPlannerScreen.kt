@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.babytimer.data.Recipe
 import com.example.babytimer.ui.theme.*
 
 @Composable
@@ -35,6 +36,9 @@ fun MealPlannerScreen(
 
     var showActionDialog by remember { mutableStateOf(false) }
     var showLibraryPicker by remember { mutableStateOf(false) }
+
+    var viewingRecipe by remember { mutableStateOf<Recipe?>(null) }
+    var editingRecipe by remember { mutableStateOf<Recipe?>(null) }
 
     Scaffold(
         containerColor = CreamBg
@@ -199,13 +203,9 @@ fun MealPlannerScreen(
             confirmButton = {
                 Button(onClick = {
                     showActionDialog = false
-                    if (savedRecipes.isNotEmpty()) {
-                        showLibraryPicker = true
-                    } else {
-                        onSelectMealSlot(activeDay, activeSlot, activeMealName)
-                    }
+                    showLibraryPicker = true
                 }) {
-                    Text("📂 Use Saved Recipe")
+                    Text("📂 Choose from Library")
                 }
             },
             dismissButton = {
@@ -219,35 +219,72 @@ fun MealPlannerScreen(
         )
     }
 
-    // Saved Recipe Library Picker Dialog
+    // Saved Recipe Library Picker Dialog with View & Edit options
     if (showLibraryPicker) {
         AlertDialog(
             onDismissRequest = { showLibraryPicker = false },
-            title = { Text("Select from Saved Library") },
+            title = { Text("Saved Recipe Library") },
             text = {
                 if (savedRecipes.isEmpty()) {
-                    Text("No saved recipes found. Create one first!")
+                    Text("No saved recipes found.")
                 } else {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(280.dp),
+                            .height(320.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(savedRecipes) { recipe ->
                             Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.updateMeal(activeDay, activeSlot, recipe.title)
-                                        showLibraryPicker = false
-                                    },
+                                modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = MintCardBg)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(text = recipe.title, fontWeight = FontWeight.Bold, color = DeepPurple)
                                     if (recipe.content.isNotBlank()) {
                                         Text(text = recipe.content, style = MaterialTheme.typography.bodySmall, color = MutedText, maxLines = 2)
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        // Assign Button
+                                        Button(
+                                            onClick = {
+                                                viewModel.updateMeal(activeDay, activeSlot, recipe.title)
+                                                showLibraryPicker = false
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(0.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = AccentPurple)
+                                        ) {
+                                            Text("Assign", fontSize = 11.sp)
+                                        }
+
+                                        // View Button
+                                        OutlinedButton(
+                                            onClick = {
+                                                showLibraryPicker = false
+                                                viewingRecipe = recipe
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text("👁️ View", fontSize = 11.sp, color = DeepPurple)
+                                        }
+
+                                        // Edit Button
+                                        OutlinedButton(
+                                            onClick = {
+                                                showLibraryPicker = false
+                                                editingRecipe = recipe
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text("✏️ Edit", fontSize = 11.sp, color = DeepPurple)
+                                        }
                                     }
                                 }
                             }
@@ -257,6 +294,85 @@ fun MealPlannerScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLibraryPicker = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    // View Recipe Dialog with option to Edit
+    if (viewingRecipe != null) {
+        val recipe = viewingRecipe!!
+        AlertDialog(
+            onDismissRequest = { viewingRecipe = null },
+            title = { Text(recipe.title, fontWeight = FontWeight.Bold, color = DeepPurple) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                ) {
+                    Text(
+                        text = recipe.content.ifBlank { "No ingredients or instructions provided yet." },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = DeepPurple
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val r = viewingRecipe
+                    viewingRecipe = null
+                    editingRecipe = r
+                }) {
+                    Text("✏️ Edit Recipe")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewingRecipe = null }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    // Edit Recipe Dialog
+    if (editingRecipe != null) {
+        val recipe = editingRecipe!!
+        var editTitle by remember { mutableStateOf(recipe.title) }
+        var editContent by remember { mutableStateOf(recipe.content) }
+
+        AlertDialog(
+            onDismissRequest = { editingRecipe = null },
+            title = { Text("Edit Recipe") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = editTitle,
+                        onValueChange = { editTitle = it },
+                        label = { Text("Recipe Title") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = editContent,
+                        onValueChange = { editContent = it },
+                        label = { Text("Ingredients & Instructions") },
+                        modifier = Modifier.height(200.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.saveRecipe(editTitle, editContent)
+                    editingRecipe = null
+                }) {
+                    Text("Save Changes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingRecipe = null }) {
                     Text("Cancel")
                 }
             }
