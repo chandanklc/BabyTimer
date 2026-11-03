@@ -38,7 +38,8 @@ import com.example.babytimer.ui.theme.*
 fun HomeScreen(
     viewModel: SplashViewModel,
     diaperViewModel: DiaperViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-    onNavigateBackToSplash: () -> Unit = {}
+    onNavigateBackToSplash: () -> Unit = {},
+    onNavigateToMealPlanner: () -> Unit = {}
 ) {
     val babyName by viewModel.babyName.collectAsState()
     val photoUri by viewModel.photoUri.collectAsState()
@@ -237,9 +238,11 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Card 1: Meal Reminder
+            // Card 1: Meal Reminder (Clickable to Meal Planner)
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToMealPlanner() },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -248,14 +251,14 @@ fun HomeScreen(
                     modifier = Modifier.padding(20.dp)
                 ) {
                     Text(
-                        text = "Meal reminder",
+                        text = "Meal planner & reminder 🍽️",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = DeepPurple
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "A little heads-up for the next feed",
+                        text = "Plan every bite, one week at a time",
                         style = MaterialTheme.typography.bodySmall,
                         color = MutedText
                     )
@@ -277,21 +280,21 @@ fun HomeScreen(
                                     .background(MintCardBg),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "🍼", fontSize = 28.sp)
+                                Text(text = "🍲", fontSize = 28.sp)
                             }
 
                             Spacer(modifier = Modifier.width(16.dp))
 
                             Column {
                                 Text(
-                                    text = "Next meal",
+                                    text = "Weekly Menu",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = DeepPurple
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "12:15 PM • 45 min",
+                                    text = "Tap to open full schedule",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MutedText
                                 )
@@ -299,11 +302,10 @@ fun HomeScreen(
                         }
 
                         Text(
-                            text = "Mark fed ›",
+                            text = "View all ›",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = AccentPurple,
-                            modifier = Modifier.clickable { }
+                            color = AccentPurple
                         )
                     }
                 }

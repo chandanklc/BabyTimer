@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import com.example.babytimer.data.BabyPreferencesRepositoryImpl
 import com.example.babytimer.data.dataStore
 import com.example.babytimer.ui.home.HomeScreen
+import com.example.babytimer.ui.meal.MealPlannerScreen
 import com.example.babytimer.ui.splash.SplashScreen
 import com.example.babytimer.ui.splash.SplashViewModel
 import com.example.babytimer.ui.theme.BabyTimerTheme
@@ -38,7 +39,11 @@ class MainActivity : ComponentActivity() {
                             )
                             "home" -> HomeScreen(
                                 viewModel = splashViewModel,
-                                onNavigateBackToSplash = { currentScreen = "splash" }
+                                onNavigateBackToSplash = { currentScreen = "splash" },
+                                onNavigateToMealPlanner = { currentScreen = "meal_planner" }
+                            )
+                            "meal_planner" -> MealPlannerScreen(
+                                onBack = { currentScreen = "home" }
                             )
                         }
                     }
