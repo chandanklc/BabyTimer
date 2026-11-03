@@ -21,7 +21,7 @@ class SplashViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private class FakeBabyPreferencesRepository : BabyPreferencesRepository {
-        private val _babyName = MutableStateFlow("Baby")
+        private val _babyName = MutableStateFlow("MAHASVIN")
         private val _photoUri = MutableStateFlow<String?>(null)
         private val _normalTimerEndTime = MutableStateFlow(0L)
         private val _reusableTimerEndTime = MutableStateFlow(0L)
@@ -63,7 +63,7 @@ class SplashViewModelTest {
         val repository = FakeBabyPreferencesRepository()
         val viewModel = SplashViewModel(repository)
 
-        assertEquals("Baby", viewModel.babyName.value)
+        assertEquals("MAHASVIN", viewModel.babyName.value)
         assertEquals(null, viewModel.photoUri.value)
     }
 
