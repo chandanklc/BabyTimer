@@ -58,28 +58,31 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
     override val savedRecipes: Flow<List<Recipe>> = dataStore.data.map { prefs ->
         val jsonStr = prefs[RECIPES_KEY]
         val list = mutableListOf<Recipe>()
+        val existingTitles = mutableSetOf<String>()
         try {
-            if (jsonStr.isNullOrBlank()) {
-                list.addAll(defaultRecipes)
-            } else {
+            if (!jsonStr.isNullOrBlank()) {
                 val arr = JSONArray(jsonStr)
-                if (arr.length() == 0) {
-                    list.addAll(defaultRecipes)
-                } else {
-                    for (i in 0 until arr.length()) {
-                        val obj = arr.getJSONObject(i)
-                        list.add(
-                            Recipe(
-                                id = obj.optString("id", UUID.randomUUID().toString()),
-                                title = obj.optString("title", ""),
-                                content = obj.optString("content", "")
-                            )
-                        )
-                    }
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    val recipe = Recipe(
+                        id = obj.optString("id", UUID.randomUUID().toString()),
+                        title = obj.optString("title", ""),
+                        content = obj.optString("content", "")
+                    )
+                    list.add(recipe)
+                    existingTitles.add(recipe.title)
+                }
+            }
+
+            // Ensure all 7 default baby-friendly recipes are always present
+            defaultRecipes.forEach { defaultRecipe ->
+                if (!existingTitles.contains(defaultRecipe.title)) {
+                    list.add(defaultRecipe)
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            list.clear()
             list.addAll(defaultRecipes)
         }
         list
@@ -90,38 +93,30 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
         dataStore.edit { prefs ->
             val jsonStr = prefs[RECIPES_KEY]
             val arr = if (jsonStr.isNullOrBlank()) {
-                JSONArray().apply {
-                    defaultRecipes.forEach { r ->
-                        put(JSONObject().apply {
-                            put("id", r.id)
-                            put("title", r.title)
-                            put("content", r.content)
-                        })
-                    }
-                }
+                JSONArray()
             } else {
-                val existing = JSONArray(jsonStr)
-                if (existing.length() == 0) {
-                    JSONArray().apply {
-                        defaultRecipes.forEach { r ->
-                            put(JSONObject().apply {
-                                put("id", r.id)
-                                put("title", r.title)
-                                put("content", r.content)
-                            })
-                        }
-                    }
-                } else {
-                    existing
+                JSONArray(jsonStr)
+            }
+
+            var found = false
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                if (obj.optString("title") == title) {
+                    obj.put("content", content)
+                    found = true
+                    break
                 }
             }
 
-            val obj = JSONObject().apply {
-                put("id", newRecipe.id)
-                put("title", newRecipe.title)
-                put("content", newRecipe.content)
+            if (!found) {
+                val obj = JSONObject().apply {
+                    put("id", newRecipe.id)
+                    put("title", newRecipe.title)
+                    put("content", newRecipe.content)
+                }
+                arr.put(obj)
             }
-            arr.put(obj)
+
             prefs[RECIPES_KEY] = arr.toString()
         }
         return newRecipe
