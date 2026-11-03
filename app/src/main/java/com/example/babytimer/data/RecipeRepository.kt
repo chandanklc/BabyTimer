@@ -63,15 +63,19 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
                 list.addAll(defaultRecipes)
             } else {
                 val arr = JSONArray(jsonStr)
-                for (i in 0 until arr.length()) {
-                    val obj = arr.getJSONObject(i)
-                    list.add(
-                        Recipe(
-                            id = obj.optString("id", UUID.randomUUID().toString()),
-                            title = obj.optString("title", ""),
-                            content = obj.optString("content", "")
+                if (arr.length() == 0) {
+                    list.addAll(defaultRecipes)
+                } else {
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        list.add(
+                            Recipe(
+                                id = obj.optString("id", UUID.randomUUID().toString()),
+                                title = obj.optString("title", ""),
+                                content = obj.optString("content", "")
+                            )
                         )
-                    )
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -84,19 +88,34 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
     override suspend fun saveRecipe(title: String, content: String): Recipe {
         val newRecipe = Recipe(title = title, content = content)
         dataStore.edit { prefs ->
-            val jsonStr = prefs[RECIPES_KEY] ?: run {
-                // If first save, serialize defaults + new recipe
-                val initialArr = JSONArray()
-                defaultRecipes.forEach { r ->
-                    initialArr.put(JSONObject().apply {
-                        put("id", r.id)
-                        put("title", r.title)
-                        put("content", r.content)
-                    })
+            val jsonStr = prefs[RECIPES_KEY]
+            val arr = if (jsonStr.isNullOrBlank()) {
+                JSONArray().apply {
+                    defaultRecipes.forEach { r ->
+                        put(JSONObject().apply {
+                            put("id", r.id)
+                            put("title", r.title)
+                            put("content", r.content)
+                        })
+                    }
                 }
-                initialArr.toString()
+            } else {
+                val existing = JSONArray(jsonStr)
+                if (existing.length() == 0) {
+                    JSONArray().apply {
+                        defaultRecipes.forEach { r ->
+                            put(JSONObject().apply {
+                                put("id", r.id)
+                                put("title", r.title)
+                                put("content", r.content)
+                            })
+                        }
+                    }
+                } else {
+                    existing
+                }
             }
-            val arr = JSONArray(jsonStr)
+
             val obj = JSONObject().apply {
                 put("id", newRecipe.id)
                 put("title", newRecipe.title)
