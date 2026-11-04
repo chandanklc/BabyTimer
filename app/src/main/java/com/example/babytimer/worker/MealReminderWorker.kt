@@ -16,13 +16,13 @@ import com.example.babytimer.MainActivity
 class MealReminderWorker(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        val mealName = inputData.getString("meal_name") ?: "Meal"
-        val message = inputData.getString("message") ?: "Time for $mealName!"
-        showMealNotification(mealName, message)
+        val mealTitle = inputData.getString("meal_title") ?: "Meal Time"
+        val mealName = inputData.getString("meal_name") ?: "Scheduled meal"
+        showMealNotification(mealTitle, "Time for $mealName! 🍼")
         return Result.success()
     }
 
-    private fun showMealNotification(mealName: String, message: String) {
+    private fun showMealNotification(title: String, message: String) {
         val context = applicationContext
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "meal_reminder_channel"
@@ -55,7 +55,7 @@ class MealReminderWorker(appContext: Context, workerParams: WorkerParameters) : 
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_menu_today)
-            .setContentTitle("BabyTimer - Meal Time! 🍼")
+            .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
