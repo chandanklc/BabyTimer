@@ -3,12 +3,14 @@ package com.example.babytimer.data
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.coroutines.flow.callbackFlow
 import java.util.UUID
 
 data class Recipe(
@@ -24,7 +26,6 @@ interface RecipeRepository {
 }
 
 class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataStore<Preferences>) : RecipeRepository {
-    private val RECIPES_KEY = stringPreferencesKey("saved_recipes_json_key")
     private val firestore = FirebaseFirestore.getInstance()
     private val rtdb = FirebaseDatabase.getInstance("https://babytimer-a8dcb-default-rtdb.firebaseio.com/")
 
@@ -59,105 +60,75 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
         )
     )
 
-    override val savedRecipes: Flow<List<Recipe>> = dataStore.data.map { prefs ->
-        val jsonStr = prefs[RECIPES_KEY]
-        val list = mutableListOf<Recipe>()
-        val existingTitles = mutableSetOf<String>()
-        try {
-            if (!jsonStr.isNullOrBlank()) {
-                val arr = JSONArray(jsonStr)
-                for (i in 0 until arr.length()) {
-                    val obj = arr.getJSONObject(i)
-                    val recipe = Recipe(
-                        id = obj.optString("id", UUID.randomUUID().toString()),
-                        title = obj.optString("title", ""),
-                        content = obj.optString("content", "")
-                    )
-                    list.add(recipe)
-                    existingTitles.add(recipe.title)
+    override val savedRecipes: Flow<List<Recipe>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val cloudRecipes = mutableMapOf<String, Recipe>()
+                for (child in snapshot.children) {
+                    val id = child.key ?: UUID.randomUUID().toString()
+                    val title = child.child("title").getValue(String::class.java) ?: ""
+                    val content = child.child("content").getValue(String::class.java) ?: ""
+                    if (title.isNotBlank()) {
+                        cloudRecipes[title] = Recipe(id = id, title = title, content = content)
+                    }
                 }
+
+                val combined = mutableListOf<Recipe>()
+                val seenTitles = mutableSetOf<String>()
+
+                // Add cloud recipes from Firebase Realtime Database
+                cloudRecipes.values.forEach { recipe ->
+                    combined.add(recipe)
+                    seenTitles.add(recipe.title)
+                }
+
+                // Add default recipes if not already in Firebase
+                defaultRecipes.forEach { defaultRecipe ->
+                    if (!seenTitles.contains(defaultRecipe.title)) {
+                        combined.add(defaultRecipe)
+                        seenTitles.add(defaultRecipe.title)
+                    }
+                }
+
+                trySend(combined)
             }
 
-            // Ensure all 7 default baby-friendly recipes are always present
-            defaultRecipes.forEach { defaultRecipe ->
-                if (!existingTitles.contains(defaultRecipe.title)) {
-                    list.add(defaultRecipe)
-                }
+            override fun onCancelled(error: DatabaseError) {
+                trySend(defaultRecipes)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            list.clear()
-            list.addAll(defaultRecipes)
         }
-        list
+
+        val ref = rtdb.getReference("recipes")
+        ref.addValueEventListener(listener)
+
+        awaitClose {
+            ref.removeEventListener(listener)
+        }
     }
 
     override suspend fun saveRecipe(title: String, content: String): Recipe {
         val newRecipe = Recipe(title = title, content = content)
         
-        // Sync to Firebase Firestore and Realtime Database
         try {
+            rtdb.getReference("recipes").child(newRecipe.id)
+                .setValue(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
+
             firestore.collection("recipes")
                 .document(newRecipe.id)
                 .set(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
-
-            rtdb.getReference("recipes").child(newRecipe.id)
-                .setValue(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        dataStore.edit { prefs ->
-            val jsonStr = prefs[RECIPES_KEY]
-            val arr = if (jsonStr.isNullOrBlank()) {
-                JSONArray()
-            } else {
-                JSONArray(jsonStr)
-            }
-
-            var found = false
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                if (obj.optString("title") == title) {
-                    obj.put("content", content)
-                    found = true
-                    break
-                }
-            }
-
-            if (!found) {
-                val obj = JSONObject().apply {
-                    put("id", newRecipe.id)
-                    put("title", newRecipe.title)
-                    put("content", newRecipe.content)
-                }
-                arr.put(obj)
-            }
-
-            prefs[RECIPES_KEY] = arr.toString()
-        }
         return newRecipe
     }
 
     override suspend fun deleteRecipe(id: String) {
         try {
-            firestore.collection("recipes").document(id).delete()
             rtdb.getReference("recipes").child(id).removeValue()
+            firestore.collection("recipes").document(id).delete()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-
-        dataStore.edit { prefs ->
-            val jsonStr = prefs[RECIPES_KEY] ?: "[]"
-            val arr = JSONArray(jsonStr)
-            val newArr = JSONArray()
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                if (obj.optString("id") != id) {
-                    newArr.put(obj)
-                }
-            }
-            prefs[RECIPES_KEY] = newArr.toString()
         }
     }
 }
