@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.babytimer.ui.theme.*
@@ -178,7 +179,8 @@ fun MealPlannerScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
-                                    fontSize = 12.sp
+                                    fontSize = 12.sp,
+                                    textAlign = TextAlign.Center
                                 )
                             }
 
@@ -224,9 +226,9 @@ fun MealTimeTag(
             .padding(vertical = 4.dp, horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold, fontSize = 8.sp)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold, fontSize = 8.sp, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(1.dp))
-        Text(text = time, style = MaterialTheme.typography.labelSmall, color = AccentPurple, fontWeight = FontWeight.Bold, fontSize = 9.sp)
+        Text(text = time, style = MaterialTheme.typography.labelSmall, color = AccentPurple, fontWeight = FontWeight.Bold, fontSize = 9.sp, textAlign = TextAlign.Center)
     }
 }
 
@@ -252,7 +254,8 @@ fun MealSlotBox(
             fontWeight = FontWeight.Bold,
             color = DeepPurple,
             fontSize = 11.sp,
-            maxLines = 1
+            maxLines = 1,
+            textAlign = TextAlign.Center
         )
     }
 }
