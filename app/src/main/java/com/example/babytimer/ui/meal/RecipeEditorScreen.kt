@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.babytimer.data.Recipe
 import com.example.babytimer.ui.theme.*
 
 @Composable
@@ -33,8 +34,17 @@ fun RecipeEditorScreen(
     var title by remember { mutableStateOf(initialMealName) }
     var recipeContent by remember { mutableStateOf("") }
     var showRecipePicker by remember { mutableStateOf(false) }
+    var recipeToConfirm by remember { mutableStateOf<Recipe?>(null) }
 
     val savedRecipes by viewModel.savedRecipes.collectAsState()
+
+    // Pre-load content if initialMealName matches a saved recipe
+    LaunchedEffect(initialMealName, savedRecipes) {
+        val matched = savedRecipes.find { it.title.equals(initialMealName, ignoreCase = true) }
+        if (matched != null && recipeContent.isBlank()) {
+            recipeContent = matched.content
+        }
+    }
 
     val slotTitleFormatted = when (slotType) {
         "am" -> "AM Meal"
@@ -77,6 +87,9 @@ fun RecipeEditorScreen(
                     Button(
                         onClick = {
                             viewModel.updateMeal(dayName, slotType, title)
+                            if (title.isNotBlank()) {
+                                viewModel.saveRecipe(title, recipeContent)
+                            }
                             onBack()
                         },
                         modifier = Modifier
@@ -87,7 +100,7 @@ fun RecipeEditorScreen(
                     ) {
                         Icon(imageVector = Icons.Default.Check, contentDescription = "Assign")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Assign to $dayName")
+                        Text("Save & Assign")
                     }
                 }
             }
@@ -124,7 +137,7 @@ fun RecipeEditorScreen(
 
                 Column {
                     Text(
-                        text = "Recipe & Meal Planner",
+                        text = "Recipe & Ingredients",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = DeepPurple
@@ -137,18 +150,17 @@ fun RecipeEditorScreen(
                 }
             }
 
-            // Quick Assign Button from Library
-            if (savedRecipes.isNotEmpty()) {
-                OutlinedButton(
-                    onClick = { showRecipePicker = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("📂 Choose from Saved Recipe Library (${savedRecipes.size})", color = AccentPurple, fontWeight = FontWeight.SemiBold)
-                }
+            // Button to see already saved recipes from library
+            OutlinedButton(
+                onClick = { showRecipePicker = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+            ) {
+                Text("📂 Browse Saved Recipes Library (${savedRecipes.size})", color = AccentPurple, fontWeight = FontWeight.Bold)
             }
 
-            // Recipe Title Field
+            // Recipe Title Field (Editable)
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -158,11 +170,11 @@ fun RecipeEditorScreen(
                 singleLine = true
             )
 
-            // Recipe Instructions / Ingredients
+            // Recipe Instructions / Ingredients Field (Editable)
             OutlinedTextField(
                 value = recipeContent,
                 onValueChange = { recipeContent = it },
-                label = { Text("Recipe Ingredients & Instructions") },
+                label = { Text("Ingredients & Step-by-Step Instructions") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(240.dp),
@@ -171,13 +183,14 @@ fun RecipeEditorScreen(
         }
     }
 
+    // Library Picker Dialog
     if (showRecipePicker) {
         AlertDialog(
             onDismissRequest = { showRecipePicker = false },
-            title = { Text("Select from Library") },
+            title = { Text("Saved Recipe Library") },
             text = {
                 if (savedRecipes.isEmpty()) {
-                    Text("No saved recipes yet.")
+                    Text("No saved recipes found.")
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -190,9 +203,8 @@ fun RecipeEditorScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        title = recipe.title
-                                        recipeContent = recipe.content
                                         showRecipePicker = false
+                                        recipeToConfirm = recipe
                                     },
                                 colors = CardDefaults.cardColors(containerColor = MintCardBg)
                             ) {
@@ -210,6 +222,32 @@ fun RecipeEditorScreen(
             confirmButton = {
                 TextButton(onClick = { showRecipePicker = false }) {
                     Text("Close")
+                }
+            }
+        )
+    }
+
+    // Confirmation Alert Dialog when picking a saved recipe from library
+    if (recipeToConfirm != null) {
+        val recipe = recipeToConfirm!!
+        AlertDialog(
+            onDismissRequest = { recipeToConfirm = null },
+            title = { Text("Confirm Recipe Assignment") },
+            text = { Text("Are you sure you want to assign '${recipe.title}' to $dayName $slotTitleFormatted?\n\nThis will load its ingredients and instructions into this meal slot.") },
+            confirmButton = {
+                Button(onClick = {
+                    title = recipe.title
+                    recipeContent = recipe.content
+                    viewModel.updateMeal(dayName, slotType, recipe.title)
+                    recipeToConfirm = null
+                    onBack()
+                }) {
+                    Text("Yes, Assign")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { recipeToConfirm = null }) {
+                    Text("Cancel")
                 }
             }
         )
