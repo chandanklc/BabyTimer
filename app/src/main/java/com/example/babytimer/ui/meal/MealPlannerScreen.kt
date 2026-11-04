@@ -85,7 +85,7 @@ fun MealPlannerScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Tap any meal slot to view or edit ingredients",
+                text = "Tap the meal plan to edit and save the recipes",
                 style = MaterialTheme.typography.bodySmall,
                 color = MutedText
             )
@@ -194,12 +194,6 @@ fun MealSlotBox(
             color = DeepPurple,
             fontSize = 11.sp,
             maxLines = 1
-        )
-        Text(
-            text = "Tap to view",
-            style = MaterialTheme.typography.labelSmall,
-            color = AccentPurple,
-            fontSize = 9.sp
         )
     }
 }
