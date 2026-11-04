@@ -3,6 +3,7 @@ package com.example.babytimer.data
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,6 +26,7 @@ interface RecipeRepository {
 class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataStore<Preferences>) : RecipeRepository {
     private val RECIPES_KEY = stringPreferencesKey("saved_recipes_json_key")
     private val firestore = FirebaseFirestore.getInstance()
+    private val rtdb = FirebaseDatabase.getInstance("https://babytimer-a8dcb-default-rtdb.firebaseio.com/")
 
     private val defaultRecipes = listOf(
         Recipe(
@@ -93,11 +95,14 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
     override suspend fun saveRecipe(title: String, content: String): Recipe {
         val newRecipe = Recipe(title = title, content = content)
         
-        // Sync to Firebase Firestore cloud library
+        // Sync to Firebase Firestore and Realtime Database
         try {
             firestore.collection("recipes")
                 .document(newRecipe.id)
                 .set(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
+
+            rtdb.getReference("recipes").child(newRecipe.id)
+                .setValue(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -137,6 +142,7 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
     override suspend fun deleteRecipe(id: String) {
         try {
             firestore.collection("recipes").document(id).delete()
+            rtdb.getReference("recipes").child(id).removeValue()
         } catch (e: Exception) {
             e.printStackTrace()
         }
