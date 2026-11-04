@@ -1,0 +1,70 @@
+package com.example.babytimer.worker
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.media.AudioAttributes
+import android.os.Build
+import android.provider.Settings
+import androidx.core.app.NotificationCompat
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import com.example.babytimer.MainActivity
+
+class MealReminderWorker(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
+
+    override fun doWork(): Result {
+        val mealName = inputData.getString("meal_name") ?: "Meal"
+        val message = inputData.getString("message") ?: "Time for $mealName!"
+        showMealNotification(mealName, message)
+        return Result.success()
+    }
+
+    private fun showMealNotification(mealName: String, message: String) {
+        val context = applicationContext
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "meal_reminder_channel"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
+
+            val channel = NotificationChannel(
+                channelId,
+                "Meal Reminders",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "High priority reminders for baby meal times"
+                enableVibration(true)
+                setSound(Settings.System.DEFAULT_NOTIFICATION_URI, audioAttributes)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_menu_today)
+            .setContentTitle("BabyTimer - Meal Time! 🍼")
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .addAction(android.R.drawable.ic_menu_today, "Acknowledge", pendingIntent)
+            .build()
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+}

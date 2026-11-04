@@ -24,6 +24,13 @@ class MealPlannerViewModel(application: Application) : AndroidViewModel(applicat
             initialValue = emptyList()
         )
 
+    val mealTimes: StateFlow<Map<String, String>> = mealRepository.mealTimes
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = mapOf("am" to "08:30 AM", "lunch" to "01:00 PM", "snack" to "03:30 PM", "dinner" to "07:30 PM")
+        )
+
     val savedRecipes: StateFlow<List<Recipe>> = recipeRepository.savedRecipes
         .stateIn(
             scope = viewModelScope,
@@ -34,6 +41,12 @@ class MealPlannerViewModel(application: Application) : AndroidViewModel(applicat
     fun updateMeal(dayName: String, slotType: String, newMeal: String) {
         viewModelScope.launch {
             mealRepository.updateMeal(dayName, slotType, newMeal)
+        }
+    }
+
+    fun updateMealTime(slotType: String, timeStr: String) {
+        viewModelScope.launch {
+            mealRepository.updateMealTime(slotType, timeStr)
         }
     }
 

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +28,33 @@ fun MealPlannerScreen(
     onSelectMealSlot: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     val weeklyPlan by viewModel.weeklyPlan.collectAsState()
+    val mealTimes by viewModel.mealTimes.collectAsState()
+    val context = LocalContext.current
+
+    fun openTimePicker(slotType: String, currentTimeStr: String) {
+        val parts = currentTimeStr.split(":", " ")
+        var hour = parts.getOrNull(0)?.toIntOrNull() ?: 8
+        val minute = parts.getOrNull(1)?.toIntOrNull() ?: 30
+        val isPm = currentTimeStr.contains("PM", ignoreCase = true)
+        if (isPm && hour < 12) hour += 12
+        if (!isPm && hour == 12) hour = 0
+
+        android.app.TimePickerDialog(
+            context,
+            { _, h, m ->
+                val formattedTime = String.format(
+                    "%02d:%02d %s",
+                    if (h % 12 == 0) 12 else h % 12,
+                    m,
+                    if (h >= 12) "PM" else "AM"
+                )
+                viewModel.updateMealTime(slotType, formattedTime)
+            },
+            hour,
+            minute,
+            false
+        ).show()
+    }
 
     Scaffold(
         containerColor = CreamBg
@@ -85,25 +113,35 @@ fun MealPlannerScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Tap the meal plan to edit and save the recipes",
+                text = "Tap the meal plan to edit and save the recipes (Tap times to edit reminders)",
                 style = MaterialTheme.typography.bodySmall,
                 color = MutedText
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Column Labels Header
+            // Column Labels Header with Editable Times
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "DAY", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold, modifier = Modifier.width(60.dp))
-                Text(text = "AM MEAL", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold)
-                Text(text = "LUNCH", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold)
-                Text(text = "DINNER", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold)
-                Text(text = "SNACK", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold)
+                Text(text = "DAY", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold, modifier = Modifier.width(50.dp))
+
+                MealTimeTag(label = "AM MEAL", time = mealTimes["am"] ?: "08:30 AM") {
+                    openTimePicker("am", mealTimes["am"] ?: "08:30 AM")
+                }
+                MealTimeTag(label = "LUNCH", time = mealTimes["lunch"] ?: "01:00 PM") {
+                    openTimePicker("lunch", mealTimes["lunch"] ?: "01:00 PM")
+                }
+                MealTimeTag(label = "DINNER", time = mealTimes["dinner"] ?: "07:30 PM") {
+                    openTimePicker("dinner", mealTimes["dinner"] ?: "07:30 PM")
+                }
+                MealTimeTag(label = "SNACK", time = mealTimes["snack"] ?: "03:30 PM") {
+                    openTimePicker("snack", mealTimes["snack"] ?: "03:30 PM")
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -168,6 +206,27 @@ fun MealPlannerScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MealTimeTag(
+    label: String,
+    time: String,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(62.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.White)
+            .clickable { onClick() }
+            .padding(vertical = 4.dp, horizontal = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.Bold, fontSize = 8.sp)
+        Spacer(modifier = Modifier.height(1.dp))
+        Text(text = time, style = MaterialTheme.typography.labelSmall, color = AccentPurple, fontWeight = FontWeight.Bold, fontSize = 9.sp)
     }
 }
 

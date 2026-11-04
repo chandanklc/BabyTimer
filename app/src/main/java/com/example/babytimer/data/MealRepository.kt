@@ -18,19 +18,28 @@ data class DayMealPlan(
 
 interface MealRepository {
     val weeklyPlan: Flow<List<DayMealPlan>>
+    val mealTimes: Flow<Map<String, String>>
     suspend fun updateMeal(dayName: String, slotType: String, newMeal: String)
+    suspend fun updateMealTime(slotType: String, timeStr: String)
 }
 
 class MealRepositoryImpl(private val dataStore: androidx.datastore.core.DataStore<Preferences>) : MealRepository {
 
     private val defaultPlans = listOf(
-        Triple("Monday", listOf("Oats", "Veggie", "Rice", "Fruit"), Color(0xFFD3F5E4)),
-        Triple("Tuesday", listOf("Idli", "Lentil", "Pasta", "Yogurt"), Color(0xFFE8E0FF)),
-        Triple("Wednesday", listOf("Toast", "Khichdi", "Soup", "Banana"), Color(0xFFFFE0CC)),
-        Triple("Thursday", listOf("Pancake", "Rice", "Dal", "Berries"), Color(0xFFFFD6E0)),
-        Triple("Friday", listOf("Porridge", "Potato", "Fish", "Apple"), Color(0xFFD3F5E4)),
-        Triple("Saturday", listOf("Puff", "Noodles", "Stew", "Cookie"), Color(0xFFE8E0FF)),
-        Triple("Sunday", listOf("Waffle", "Paneer", "Khichdi", "Mango"), Color(0xFFFFE0CC))
+        Triple("Monday", listOf("Oats & Banana Mash", "Steamed Apple & Pear Puree", "Moong Dal Khichdi", "Mashed Sweet Potato & Carrot"), Color(0xFFD3F5E4)),
+        Triple("Tuesday", listOf("Soft Idli & Veggie Mash", "Avocado & Yogurt Cream", "Rice & Dal Soup", "Oats & Banana Mash"), Color(0xFFE8E0FF)),
+        Triple("Wednesday", listOf("Steamed Apple & Pear Puree", "Moong Dal Khichdi", "Mashed Sweet Potato & Carrot", "Soft Idli & Veggie Mash"), Color(0xFFFFE0CC)),
+        Triple("Thursday", listOf("Avocado & Yogurt Cream", "Rice & Dal Soup", "Oats & Banana Mash", "Steamed Apple & Pear Puree"), Color(0xFFFFD6E0)),
+        Triple("Friday", listOf("Moong Dal Khichdi", "Mashed Sweet Potato & Carrot", "Soft Idli & Veggie Mash", "Avocado & Yogurt Cream"), Color(0xFFD3F5E4)),
+        Triple("Saturday", listOf("Rice & Dal Soup", "Oats & Banana Mash", "Steamed Apple & Pear Puree", "Moong Dal Khichdi"), Color(0xFFE8E0FF)),
+        Triple("Sunday", listOf("Mashed Sweet Potato & Carrot", "Soft Idli & Veggie Mash", "Avocado & Yogurt Cream", "Rice & Dal Soup"), Color(0xFFFFE0CC))
+    )
+
+    private val defaultTimes = mapOf(
+        "am" to "08:30 AM",
+        "lunch" to "01:00 PM",
+        "snack" to "03:30 PM",
+        "dinner" to "07:30 PM"
     )
 
     override val weeklyPlan: Flow<List<DayMealPlan>> = dataStore.data.map { prefs ->
@@ -43,10 +52,26 @@ class MealRepositoryImpl(private val dataStore: androidx.datastore.core.DataStor
         }
     }
 
+    override val mealTimes: Flow<Map<String, String>> = dataStore.data.map { prefs ->
+        mapOf(
+            "am" to (prefs[stringPreferencesKey("time_am")] ?: defaultTimes["am"]!!),
+            "lunch" to (prefs[stringPreferencesKey("time_lunch")] ?: defaultTimes["lunch"]!!),
+            "snack" to (prefs[stringPreferencesKey("time_snack")] ?: defaultTimes["snack"]!!),
+            "dinner" to (prefs[stringPreferencesKey("time_dinner")] ?: defaultTimes["dinner"]!!)
+        )
+    }
+
     override suspend fun updateMeal(dayName: String, slotType: String, newMeal: String) {
         val key = stringPreferencesKey("meal_${dayName}_${slotType}")
         dataStore.edit { prefs ->
             prefs[key] = newMeal
+        }
+    }
+
+    override suspend fun updateMealTime(slotType: String, timeStr: String) {
+        val key = stringPreferencesKey("time_${slotType}")
+        dataStore.edit { prefs ->
+            prefs[key] = timeStr
         }
     }
 }
