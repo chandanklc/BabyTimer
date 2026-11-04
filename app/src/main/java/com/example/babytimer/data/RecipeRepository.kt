@@ -66,11 +66,9 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
                 val cloudRecipes = mutableMapOf<String, Recipe>()
                 for (child in snapshot.children) {
                     val id = child.key ?: UUID.randomUUID().toString()
-                    val title = child.child("title").getValue(String::class.java) ?: ""
+                    val title = child.child("title").getValue(String::class.java)?.takeIf { it.isNotBlank() } ?: "Recipe ${id.take(6)}"
                     val content = child.child("content").getValue(String::class.java) ?: ""
-                    if (title.isNotBlank()) {
-                        cloudRecipes[title] = Recipe(id = id, title = title, content = content)
-                    }
+                    cloudRecipes[title] = Recipe(id = id, title = title, content = content)
                 }
 
                 val combined = mutableListOf<Recipe>()
@@ -110,12 +108,13 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
         val newRecipe = Recipe(title = title, content = content)
         
         try {
-            rtdb.getReference("recipes").child(newRecipe.id)
-                .setValue(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
+            rtdb.getReference("recipes").child(newRecipe.id).setValue(
+                mapOf("title" to newRecipe.title, "content" to newRecipe.content)
+            )
 
-            firestore.collection("recipes")
-                .document(newRecipe.id)
-                .set(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
+            firestore.collection("recipes").document(newRecipe.id).set(
+                mapOf("title" to newRecipe.title, "content" to newRecipe.content)
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }
