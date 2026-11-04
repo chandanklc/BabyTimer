@@ -13,12 +13,15 @@ android {
         version = release(37)
     }
 
+    val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 1
+    val patchVersion = maxOf(0, runNumber - 1)
+
     defaultConfig {
         applicationId = "com.example.babytimer"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = runNumber
+        versionName = "1.0.$patchVersion"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -60,7 +63,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(platform(libs.androidx.compose.ui.test.junit4))
+    androidTestImplementation(platform(libs.androidx.compose.ui.test.junit4))
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
