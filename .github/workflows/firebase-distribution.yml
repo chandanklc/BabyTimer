@@ -35,4 +35,4 @@ jobs:
           token: ${{ secrets.FIREBASE_TOKEN }}
           file: app/build/outputs/apk/debug/app-debug.apk
           releaseNotes: ${{ github.event.inputs.release_notes }}
-          groups: 'testers'
+          groups: 'Tester'
