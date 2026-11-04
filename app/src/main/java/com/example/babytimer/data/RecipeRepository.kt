@@ -3,6 +3,7 @@ package com.example.babytimer.data
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
@@ -23,6 +24,7 @@ interface RecipeRepository {
 
 class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataStore<Preferences>) : RecipeRepository {
     private val RECIPES_KEY = stringPreferencesKey("saved_recipes_json_key")
+    private val firestore = FirebaseFirestore.getInstance()
 
     private val defaultRecipes = listOf(
         Recipe(
@@ -90,6 +92,16 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
 
     override suspend fun saveRecipe(title: String, content: String): Recipe {
         val newRecipe = Recipe(title = title, content = content)
+        
+        // Sync to Firebase Firestore cloud library
+        try {
+            firestore.collection("recipes")
+                .document(newRecipe.id)
+                .set(mapOf("title" to newRecipe.title, "content" to newRecipe.content))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         dataStore.edit { prefs ->
             val jsonStr = prefs[RECIPES_KEY]
             val arr = if (jsonStr.isNullOrBlank()) {
@@ -123,6 +135,12 @@ class RecipeRepositoryImpl(private val dataStore: androidx.datastore.core.DataSt
     }
 
     override suspend fun deleteRecipe(id: String) {
+        try {
+            firestore.collection("recipes").document(id).delete()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         dataStore.edit { prefs ->
             val jsonStr = prefs[RECIPES_KEY] ?: "[]"
             val arr = JSONArray(jsonStr)
