@@ -17,22 +17,23 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.example.babytimer.ui.theme.*
 
 @Composable
 fun SplashScreen(
     viewModel: SplashViewModel,
-    onEnterHome: () -> Unit = {},
-    onPickImage: () -> Unit = {}
+    onEnterHome: () -> Unit = {}
 ) {
     val photoUri by viewModel.photoUri.collectAsState()
+
+    val pickImage = rememberImagePicker { uriStr ->
+        viewModel.updatePhotoUri(uriStr)
+    }
 
     Box(
         modifier = Modifier
@@ -70,6 +71,7 @@ fun SplashScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(top = 36.dp)
             ) {
+                // Small top badge / icon
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -115,16 +117,11 @@ fun SplashScreen(
                         gapLength = 6.dp,
                         cornerRadius = 24.dp
                     )
-                    .clickable { onPickImage() },
+                    .clickable { pickImage() },
                 contentAlignment = Alignment.Center
             ) {
-                if (photoUri != null) {
-                    AsyncImage(
-                        model = photoUri,
-                        contentDescription = "Baby Photo",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                if (photoUri != null && !photoUri!!.startsWith("content://")) {
+                    BabyAvatar(photoUri = photoUri, modifier = Modifier.fillMaxSize())
                 } else {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,

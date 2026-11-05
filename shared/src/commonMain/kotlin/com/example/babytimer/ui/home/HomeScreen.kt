@@ -22,7 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import com.example.babytimer.ui.splash.BabyAvatar
 import com.example.babytimer.ui.splash.SplashViewModel
 import com.example.babytimer.ui.splash.dashedBorder
 import com.example.babytimer.ui.theme.*
@@ -136,13 +136,8 @@ fun HomeScreen(
                             .background(PinkPillBg),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (photoUri != null) {
-                            AsyncImage(
-                                model = photoUri,
-                                contentDescription = "Baby Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                        if (photoUri != null && !photoUri!!.startsWith("content://")) {
+                            BabyAvatar(photoUri = photoUri, modifier = Modifier.fillMaxSize())
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Face,

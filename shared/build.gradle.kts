@@ -29,13 +29,26 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.kotlinx.datetime)
-            implementation(libs.coil.compose)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation("io.coil-kt:coil-compose:2.7.0")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+tasks.register("syncFramework") {
+    dependsOn(
+        if (System.getenv("SDK_NAME")?.startsWith("iphonesimulator") == true) {
+            "linkDebugFrameworkIosSimulatorArm64"
+        } else {
+            "linkDebugFrameworkIosArm64"
+        }
+    )
 }
 
 android {
