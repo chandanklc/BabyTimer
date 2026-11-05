@@ -26,18 +26,25 @@ import com.example.babytimer.ui.splash.BabyAvatar
 import com.example.babytimer.ui.splash.SplashViewModel
 import com.example.babytimer.ui.splash.dashedBorder
 import com.example.babytimer.ui.theme.*
+import com.example.babytimer.util.rememberNotificationPermissionLauncher
 
 @Composable
 fun HomeScreen(
     viewModel: SplashViewModel,
     diaperViewModel: DiaperViewModel,
     onNavigateBackToSplash: () -> Unit = {},
-    onNavigateToMealPlanner: () -> Unit = {},
-    onRequestNotificationPermission: () -> Unit = {}
+    onNavigateToMealPlanner: () -> Unit = {}
 ) {
     val babyName by viewModel.babyName.collectAsState()
     val photoUri by viewModel.photoUri.collectAsState()
     val diaperState by diaperViewModel.state.collectAsState()
+
+    val requestNormalPermission = rememberNotificationPermissionLauncher {
+        diaperViewModel.startNormalTimer()
+    }
+    val requestReusablePermission = rememberNotificationPermissionLauncher {
+        diaperViewModel.startReusableTimer()
+    }
 
     val cardBg = Color.White
 
@@ -55,6 +62,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Home Tab
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable { }
@@ -74,6 +82,7 @@ fun HomeScreen(
                         )
                     }
 
+                    // Floating Add Moment Button in Center
                     Box(
                         modifier = Modifier
                             .size(56.dp)
@@ -90,6 +99,7 @@ fun HomeScreen(
                         )
                     }
 
+                    // Journal Tab
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable { }
@@ -166,6 +176,7 @@ fun HomeScreen(
                     }
                 }
 
+                // Top-right badge
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -185,7 +196,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Card 1: Meal Reminder
+            // Card 1: Meal Reminder (Clickable to Meal Planner)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -258,7 +269,7 @@ fun HomeScreen(
                 }
             }
 
-            // Card 2: Diaper Change Timers
+            // Card 2: Diaper Change High-Priority Timers (2 Columns: Reusable vs Normal with Duration Dropdown)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -291,10 +302,12 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // 2 Columns Layout
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // Column 1: Normal Diaper
                         DiaperTimerColumn(
                             title = "Normal Diaper",
                             secondsRemaining = diaperState.normalSecondsRemaining,
@@ -302,14 +315,12 @@ fun HomeScreen(
                             isActive = diaperState.normalIsActive,
                             containerColor = PinkPillBg,
                             onDurationSelected = { secs -> diaperViewModel.setNormalDuration(secs) },
-                            onStart = {
-                                onRequestNotificationPermission()
-                                diaperViewModel.startNormalTimer()
-                            },
+                            onStart = { requestNormalPermission() },
                             onReset = { diaperViewModel.resetNormalTimer() },
                             modifier = Modifier.weight(1f)
                         )
 
+                        // Column 2: Reusable Diaper
                         DiaperTimerColumn(
                             title = "Reusable Diaper",
                             secondsRemaining = diaperState.reusableSecondsRemaining,
@@ -317,14 +328,77 @@ fun HomeScreen(
                             isActive = diaperState.reusableIsActive,
                             containerColor = MintCardBg,
                             onDurationSelected = { secs -> diaperViewModel.setReusableDuration(secs) },
-                            onStart = {
-                                onRequestNotificationPermission()
-                                diaperViewModel.startReusableTimer()
-                            },
+                            onStart = { requestReusablePermission() },
                             onReset = { diaperViewModel.resetReusableTimer() },
                             modifier = Modifier.weight(1f)
                         )
                     }
+                }
+            }
+
+            // Card 3: Add a reminder
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(LavenderCardBg)
+                    .dashedBorder(
+                        color = LavenderCardBorder,
+                        strokeWidth = 2.dp,
+                        strokeLength = 8.dp,
+                        gapLength = 6.dp,
+                        cornerRadius = 24.dp
+                    )
+                    .clickable { },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.White),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add",
+                                tint = AccentPurple,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column {
+                            Text(
+                                text = "Add a reminder",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = DeepPurple
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Meal, diaper, sleep or custom routine",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MutedText
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Choose type ›",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AccentPurple
+                    )
                 }
             }
         }
@@ -359,12 +433,15 @@ fun DiaperTimerColumn(
     val hrs = secondsRemaining / 3600
     val mins = (secondsRemaining % 3600) / 60
     val secs = secondsRemaining % 60
+    val hStr = if (hrs < 10) "0$hrs" else "$hrs"
+    val mStr = if (mins < 10) "0$mins" else "$mins"
+    val sStr = if (secs < 10) "0$secs" else "$secs"
     val timeFormatted = if (hrs > 0) {
-        "$hrs:${if (mins < 10) "0" else ""}$mins:${if (secs < 10) "0" else ""}$secs"
+        "$hStr:$mStr:$sStr"
     } else if (mins > 0) {
-        "${if (mins < 10) "0" else ""}$mins:${if (secs < 10) "0" else ""}$secs"
+        "$mStr:$sStr"
     } else {
-        "00:${if (secs < 10) "0" else ""}$secs"
+        "00:$sStr"
     }
 
     Column(
@@ -383,6 +460,7 @@ fun DiaperTimerColumn(
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        // Dropdown menu for selecting duration
         Box(modifier = Modifier.wrapContentSize(Alignment.TopCenter)) {
             OutlinedButton(
                 onClick = { if (!isActive) expanded = true },
