@@ -3,7 +3,8 @@ package com.example.babytimer.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.babytimer.data.BabyPreferencesRepository
-import com.example.babytimer.data.currentTimeMillis
+import com.example.babytimer.data.BabyPreferencesRepositoryImpl
+import com.example.babytimer.data.createDataStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,16 +15,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class DiaperTimerState(
-    val normalSelectedDurationSeconds: Long = 20,
+    val normalSelectedDurationSeconds: Long = 20, // Default 20s for testing
     val normalSecondsRemaining: Long = 20,
     val normalIsActive: Boolean = false,
-    val reusableSelectedDurationSeconds: Long = 3600,
+    val reusableSelectedDurationSeconds: Long = 3600, // Default 1 hour
     val reusableSecondsRemaining: Long = 3600,
     val reusableIsActive: Boolean = false
 )
 
 class DiaperViewModel(
-    private val repository: BabyPreferencesRepository,
+    private val repository: BabyPreferencesRepository = BabyPreferencesRepositoryImpl(createDataStore()),
     private val onStartWork: (String, Long, String) -> Unit = { _, _, _ -> },
     private val onCancelWork: (String) -> Unit = {},
     private val onShowNotification: (String, String, Int) -> Unit = { _, _, _ -> },
@@ -47,8 +48,9 @@ class DiaperViewModel(
 
     private fun restoreTimers() {
         viewModelScope.launch {
-            val now = currentTimeMillis()
+            val now = com.example.babytimer.data.currentTimeMillis()
 
+            // Restore normal timer
             val normalEnd = repository.normalTimerEndTime.first()
             if (normalEnd > now) {
                 val remaining = (normalEnd - now) / 1000
@@ -61,6 +63,7 @@ class DiaperViewModel(
                 repository.updateNormalTimerEndTime(0L)
             }
 
+            // Restore reusable timer
             val reusableEnd = repository.reusableTimerEndTime.first()
             if (reusableEnd > now) {
                 val remaining = (reusableEnd - now) / 1000
@@ -88,7 +91,7 @@ class DiaperViewModel(
     fun startNormalTimer() {
         if (_state.value.normalIsActive) return
         val durationSeconds = _state.value.normalSelectedDurationSeconds
-        val endTime = currentTimeMillis() + (durationSeconds * 1000L)
+        val endTime = com.example.babytimer.data.currentTimeMillis() + (durationSeconds * 1000L)
 
         viewModelScope.launch {
             repository.updateNormalTimerEndTime(endTime)
@@ -145,7 +148,7 @@ class DiaperViewModel(
     fun startReusableTimer() {
         if (_state.value.reusableIsActive) return
         val durationSeconds = _state.value.reusableSelectedDurationSeconds
-        val endTime = currentTimeMillis() + (durationSeconds * 1000L)
+        val endTime = com.example.babytimer.data.currentTimeMillis() + (durationSeconds * 1000L)
 
         viewModelScope.launch {
             repository.updateReusableTimerEndTime(endTime)
@@ -203,12 +206,15 @@ class DiaperViewModel(
         val hrs = seconds / 3600
         val mins = (seconds % 3600) / 60
         val secs = seconds % 60
+        val hStr = if (hrs < 10) "0$hrs" else "$hrs"
+        val mStr = if (mins < 10) "0$mins" else "$mins"
+        val sStr = if (secs < 10) "0$secs" else "$secs"
         return if (hrs > 0) {
-            "$hrs:${if (mins < 10) "0" else ""}$mins:${if (secs < 10) "0" else ""}$secs"
+            "$hStr:$mStr:$sStr"
         } else if (mins > 0) {
-            "${if (mins < 10) "0" else ""}$mins:${if (secs < 10) "0" else ""}$secs"
+            "$mStr:$sStr"
         } else {
-            "00:${if (secs < 10) "0" else ""}$secs"
+            "00:$sStr"
         }
     }
 }
