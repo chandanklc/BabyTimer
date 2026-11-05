@@ -24,4 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "BabyTimer"
 include(":app")
+include(":shared")
  
